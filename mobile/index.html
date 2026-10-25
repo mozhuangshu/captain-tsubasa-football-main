@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>热血足球小将（同人版）</title>
+<link rel="stylesheet" href="./style.css">
+<link rel="stylesheet" href="./responsive.css">
+</head>
+<body>
+<main class="handheld" id="handheld" aria-label="热血足球小将掌机">
+<header class="brandbar"><div class="brand"><i class="power" aria-hidden="true"></i>热血足球小将<span>同人版 · CAPTAIN TSUBASA · 13支球队</span></div><button class="fullscreen-exit" id="exit-fullscreen" hidden>退出全屏</button><details class="settings" id="settings"><summary aria-label="游戏设置">☰ 设置</summary><section class="settings-panel" aria-label="游戏设置面板">
+<label class="port-row">触控手柄<select id="touch-port"><option value="0">1P</option><option value="1">2P</option></select></label>
+<div class="settings-grid"><button id="audio">关闭声音</button><button id="fullscreen">掌机全屏</button><button id="restart">重新启动</button></div><p id="league-save-status" role="status"></p><p id="notice" role="status"></p>
+<p>摇杆移动，A 确定 / 传球，B 返回 / 射门，「跳」= A+B 一起按。摇杆与 A、B 可多指同时按；双键组合沿用原游戏规则。</p>
+<details><summary>键盘与手柄</summary><p>1P：方向键 · Z/X · Enter/Shift<br>2P：WASD · G/H · T/Y<br>顺序：方向 · A/B · START/SELECT。标准游戏手柄按接入顺序分配 1P–2P。</p></details>
+<details><summary>运行状态</summary><p id="runtime-metrics" class="debug" aria-live="off">原生帧 0 · 逻辑步 0 · 渲染 0 帧/秒</p><pre id="status" class="debug">加载原开机流程…</pre></details>
+<p><small>13支球队、46位具名人物已接入；另38个阵容槽为明确标注的改编队员。非官方跨篇章改编，保留热血足球赛制。</small><br>单人联赛开局即可自由选择 12 支对手，不限制章节顺序；输球后也可更换对手。每队每赛季最多交锋三次，联赛进度自动保存在此浏览器，不保存未完成的比赛；原有密码续关仍可使用。</p>
+</section></details></header>
+<section class="screen-frame" aria-label="游戏屏幕"><canvas id="game" width="512" height="480" style="visibility:hidden" aria-label="热血足球小将（同人版）适配画面，2倍密度像素"></canvas></section>
+<div id="touch-controls" style="display:contents">
+<section class="controller-deck" aria-label="触控方向与动作">
+<div class="dpad stick" data-dpad aria-label="摇杆，按住推向八个方向"><button data-button="Up" aria-label="上" aria-pressed="false">▲</button><button data-button="Left" aria-label="左" aria-pressed="false">◀</button><span class="stick-knob" data-stick-knob aria-hidden="true"></span><button data-button="Right" aria-label="右" aria-pressed="false">▶</button><button data-button="Down" aria-label="下" aria-pressed="false">▼</button></div>
+<div class="action-buttons"><button data-button="B" aria-label="B，返回或射门" aria-pressed="false">B</button><button class="jump" data-button="AB" aria-label="跳，等于 A 加 B 一起按" aria-pressed="false">跳<small>A+B</small></button><button data-button="A" aria-label="A，确定或传球" aria-pressed="false">A</button></div>
+</section>
+<nav class="system-buttons" aria-label="系统按键"><button data-button="Select" aria-label="SELECT，选择" aria-pressed="false">SELECT</button><button data-button="Start" aria-label="START，开始或暂停" aria-pressed="false">START</button></nav>
+</div>
+<footer class="device-foot"><span>摇杆移动 · 跳 = A+B</span><span class="speaker" aria-hidden="true"></span><span>1–2 PLAYERS</span></footer>
+<p id="error-banner" class="error-banner" role="alert" hidden></p>
+</main>
+<dialog id="league-resume"><h2>继续上次联赛？</h2><p id="league-save-summary"></p><p>仅恢复联赛进度，未完成的比赛需重踢。</p><button id="league-continue">继续联赛</button><button id="league-new">开始新联赛</button><button id="league-versus">双人对战（保留存档）</button></dialog>
+<script src="./polyfills.js"></script>
+<script data-web-loader>
+// Acknowledgement lives in the HTML so even a delayed entry script cannot swallow START.
+const bootBanner=document.querySelector('#error-banner'),bootStart=document.querySelector('[data-button="Start"]'),bootButtons=[...document.querySelectorAll('#handheld button,#touch-port')];
+bootBanner.hidden=false;bootBanner.textContent='正在加载游戏，请稍候…';
+for(const button of bootButtons)button.disabled=true;bootStart.disabled=false;
+const queueStart=event=>{
+ event.stopImmediatePropagation();window.footballPendingStart=true;bootBanner.textContent='已收到开始操作，素材加载后自动进入游戏…';
+ try{const Factory=window.AudioContext||window.webkitAudioContext;if(Factory){window.footballAudioContext??=new Factory();window.footballAudioContext.resume().catch(()=>{});}}catch{}
+};
+bootStart.addEventListener('pointerdown',queueStart,true);
+document.addEventListener('football-ready',()=>{
+ bootStart.removeEventListener('pointerdown',queueStart,true);bootBanner.hidden=true;for(const button of bootButtons)button.disabled=false;
+ if(window.footballPendingStart){window.recoveredApp.setController(0,16);setTimeout(()=>window.recoveredApp.setController(0,0),180);}
+},{once:true});
+import('../src/mobile-entry.js').catch(error=>{
+ bootStart.disabled=true;
+ const banner=document.querySelector('#error-banner');banner.hidden=false;banner.textContent='游戏入口加载失败，请检查网络后重试。';
+ const retry=document.createElement('button');retry.id='mobile-retry';retry.textContent='重新加载';retry.onclick=()=>location.reload();banner.append(retry);console.error('Mobile startup failed',error);
+});
+</script>
+</body>
+</html>

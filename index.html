@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111c23"><title>足球小将 · Web Edition</title><link rel="stylesheet" href="./src/style.css"></head>
+<body><main id="arena">
+<header class="topbar"><a class="brand" href="./index.html"><span class="crest">翼</span><span>足球小将<small>WEB EDITION · 01</small></span></a><span class="edition">同一块球场，再踢一场。</span><div class="toolbar"><button id="sound" data-boot-control disabled>关闭声音</button><button id="fullscreen" data-boot-control disabled>全屏</button><button id="settings-open" data-boot-control disabled>键位与手柄</button></div></header>
+<div class="workspace">
+<section class="stage" aria-label="游戏区">
+<div class="stage-top"><span><i class="live-dot"></i><span id="mode-label">准备开球</span></span><span id="boot-status"><span id="session-status" role="status">正在加载游戏，请稍候…</span><button id="boot-retry" hidden>重新加载</button></span></div>
+<div id="screen-slot"><canvas id="game" width="512" height="480" tabindex="0" aria-label="足球小将游戏画面"></canvas>
+<div id="welcome" class="overlay"><div class="intro"><span class="eyebrow">CAPTAIN TSUBASA / FAN GAME</span><h1>球场见。</h1><p>一个人的联赛，两个人的较量。<br>键盘、手柄，准备好就上场。</p><div class="mode-buttons"><button class="primary" data-mode="versus" data-boot-control disabled>双人对战 <span>1P × 2P →</span></button><button data-mode="solo" data-boot-control disabled>单人联赛 <span>1P →</span></button></div><button id="league-continue" data-boot-control disabled hidden>继续联赛</button><p id="league-save-status" role="status"></p><noscript>请启用 JavaScript 后重新加载游戏。</noscript><small>本地双人 · 非官方同人游戏</small></div></div>
+<div id="paused" class="overlay" hidden><div class="pause-card"><span class="eyebrow">TIME OUT</span><h2>歇口气，比赛还在。</h2><p>点击继续，回到球场。</p><button id="resume" class="primary">继续游戏</button></div></div>
+</div>
+<div class="stage-bottom"><span id="game-hint">双人模式中，两位玩家分别选择自己的球队。</span><button id="pause" disabled>暂停</button><button id="home" disabled>返回大厅</button></div>
+</section>
+<aside class="sidebar"><div class="side-title"><span class="eyebrow">THE LINEUP</span><h2>并肩，或对决。</h2></div>
+<section class="player-card"><div class="player-heading"><b>01 <span>PLAYER ONE</span></b><i class="player-dot"></i></div><h3>主场席位</h3><p id="device-0">键盘已就绪</p><div id="keys-0" class="key-summary"></div></section>
+<section class="player-card away"><div class="player-heading"><b>02 <span>PLAYER TWO</span></b><i class="player-dot"></i></div><h3>客场席位</h3><p id="device-1">键盘已就绪</p><div id="keys-1" class="key-summary"></div></section>
+<section class="playbook"><span class="eyebrow">PLAYBOOK</span><p><b>A</b> 传球 / 确定</p><p><b>B</b> 射门 / 返回</p><p><b>A+B</b> 跳跃与组合动作</p><p class="muted">插入手柄后按任意按钮唤醒。可在设置里更换所属玩家；键盘与手柄可混用。</p></section>
+<label class="display-choice">画面显示<select id="display" data-boot-control disabled><option value="crisp">清晰像素 · 智能缩放</option><option value="soft">柔和显示 · 适应窗口</option></select></label>
+</aside></div>
+<footer><span>13 支球队 · 46 位具名球员</span><span>经典像素 / 原比例画面</span></footer>
+<p id="notice" role="status" class="notice"></p><p id="error" role="alert" hidden></p>
+</main>
+<dialog id="settings"><div class="dialog-heading"><div><span class="eyebrow">MAKE IT YOURS</span><h2>键位与手柄</h2></div><button id="settings-close" aria-label="关闭设置">关闭 ✕</button></div><p class="muted">点击按键进行修改，Esc 取消。设置自动保存在此浏览器。</p><p id="mapping-message" role="status">选择要修改的按键。</p><div id="bindings"></div><label class="deadzone">摇杆死区 <input id="deadzone" type="range" min="15" max="75" step="5"><output id="deadzone-value"></output></label><p class="muted">摇杆轻微漂移时可调大死区。默认使用左摇杆；非标准手柄可逐个修改按钮映射。</p><div class="dialog-footer"><button id="reset-settings">恢复默认设置</button><button id="settings-done" class="primary">完成</button></div></dialog>
+<script>
+// This small loader must work even when a game script cannot be downloaded.
+const bootStatus=document.querySelector('#session-status'),bootRetry=document.querySelector('#boot-retry');
+bootRetry.onclick=()=>location.reload();
+const slowLoad=setTimeout(()=>{bootStatus.textContent='游戏仍在加载，网络较慢，请稍候或重新加载。';bootRetry.hidden=false;},15000);
+import('./src/entry.js').then(module=>module.start()).then(()=>{
+ clearTimeout(slowLoad);document.querySelectorAll('[data-boot-control]').forEach(el=>el.disabled=false);
+ if(!window.footballPendingMode)bootStatus.textContent='游戏已就绪，选择模式开始。';bootRetry.hidden=true;
+}).catch(error=>{
+ clearTimeout(slowLoad);bootStatus.textContent='游戏加载失败，请检查网络后重新加载。';bootRetry.hidden=false;console.error('Game startup failed',error);
+});
+</script></body></html>

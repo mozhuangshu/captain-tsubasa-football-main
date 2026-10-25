@@ -1,0 +1,3 @@
+// Editable runtime data. See docs/DEVELOPMENT.md.
+export const POSE_REPAIR_SOURCE_SHA256="ac077771cede7f7707ccc5b1ee81af17b9050a72e16326c6c8c43c2d57bf297e";
+export const POSE_REPAIR_PATCHES={"tachibana_masao":{"19":[1420]},"wakashimazu":{"19":[1420]},"takasugi":{"19":[1420]},"hernandez":{"19":[1420]},"pascal":{"19":[1420]},"margus":{"19":[1420]},"kishida":{"19":[1420]},"tachibana_kazuo":{"19":[1420]},"generic-short":{"19":[1420]},"generic-crop":{"19":[1420]},"generic-wave":{"19":[1420]},"generic-keeper":{"19":[1420]},"oda":{"19":[1420]},"kaneda":{"19":[1420]},"wakamatsu":{"19":[1420]},"kato":{"19":[1420]},"sorimachi":{"19":[1420]},"sanada":{"19":[1420]},"honma":{"19":[1420]},"bossis":{"19":[1420]},"amoros":{"19":[1420]}};

@@ -1,0 +1,5 @@
+/** Editable runtime data. See docs/DEVELOPMENT.md. */
+export const DRIVE_HAWK_NES={K:0x0f,Y:0x28,L:0x38};
+export const DRIVE_HAWK_FLAP=Object.freeze(['F39','F3A','F3B','F3A']);
+export const DRIVE_HAWK_TICKS=4;
+export const DRIVE_HAWK_ART=Object.freeze({"F39": {"width": 16, "height": 13, "rows": ["KK............KK", "KYK..........KYK", "KYYK..KKKK..KYYK", "KYLYK.KLLK.KYLYK", ".KYLYKLLLLKYLYK.", ".KYYLKKLLKKLYYK.", "..KYYLKYYKLYYK..", "..KYLYLKKLYLYK..", "...KYYLLLLYYK...", "....KKYLLYKK....", ".....KYLLYK.....", "....KYKYYKYK....", "....KKKKKKKK...."]}, "F3A": {"width": 16, "height": 11, "rows": ["......KKKK......", "KKK..KLLLLK..KKK", "KYYKKKKLLKKKKYYK", "KYLYYLKYYKLYYLYK", "KLYLYLLKKLLYLYLK", ".KKYLYLLLLYLYKK.", "...KKYYLLYYKK...", ".....KYLLYK.....", ".....KYLLYK.....", "....KYKYYKYK....", "....KKKKKKKK...."]}, "F3B": {"width": 16, "height": 11, "rows": ["......KKKK......", ".....KLLLLK.....", ".....KKLLKK.....", "..KKKLKYYKLKKK..", ".KYYLYLKKLYLYYK.", "KYLYYLLLLLLYYLYK", "KYYLKKYLLYKKLYYK", "KYLK.KYLLYK.KLYK", "KYK..KYLLYK..KYK", "KK..KYKYYKYK..KK", "....KKKKKKKK...."]}});

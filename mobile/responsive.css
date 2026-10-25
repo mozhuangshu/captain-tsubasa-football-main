@@ -1,0 +1,35 @@
+/* Keep the XHS handheld and controls; fit its existing grid to mobile landscape. */
+@media (orientation:landscape) and (max-height:600px){
+ :root{--device-height:calc(100dvh - 8px - var(--safe-top) - var(--safe-bottom))}
+ body{padding-top:calc(4px + var(--safe-top));padding-bottom:calc(4px + var(--safe-bottom))}
+ .handheld,body.dpr3-wide .handheld,body.is-immersive .handheld{
+  width:min(100%,960px);max-width:none;height:var(--device-height);padding:10px;
+  grid-template-columns:146px minmax(0,1fr) 146px;
+  grid-template-rows:30px minmax(0,1fr) 44px;gap:6px 10px;
+ }
+ .brandbar{grid-column:1/-1;grid-row:1}
+ .screen-frame,body.is-immersive .screen-frame{
+  grid-column:2;grid-row:2/4;align-self:stretch;height:auto;width:100%;min-width:0;
+  padding:8px 6px 16px;
+ }
+ #game,body.is-immersive #game{width:min(100%,calc((var(--device-height) - 82px)*256/240));max-width:100%}
+ .controller-deck,body.is-immersive .controller-deck{display:contents}
+ .dpad{grid-column:1;grid-row:2;align-self:center;justify-self:center}
+ .action-buttons{grid-column:3;grid-row:2;align-self:center;justify-self:center;margin-top:36px}
+ .system-buttons,body.is-immersive .system-buttons{grid-column:1;grid-row:3;gap:6px;width:100%}
+ .system-buttons button{min-width:0;width:70px;padding:6px;font-size:9px}
+ .device-foot,body.is-immersive .device-foot{grid-column:3;grid-row:3;width:100%;justify-content:center}
+ .device-foot .speaker,.device-foot>span:last-child{display:none}
+ body.is-immersive .brandbar{width:100%}
+ .settings-panel{top:48px;max-height:calc(100% - 60px)}
+}
+@media(max-width:360px){
+ .brand{min-width:0;letter-spacing:1px}
+ .brand span{letter-spacing:1px;overflow:hidden;text-overflow:ellipsis}
+ .settings{flex-shrink:0}
+ .settings>summary{white-space:nowrap}
+}
+
+#league-resume{max-width:min(360px,90vw);border:2px solid #263b42;border-radius:12px;padding:22px;background:#e5e6d8;color:#18282f;font:14px/1.6 sans-serif}
+#league-resume::backdrop{background:#071016bd}
+#league-resume button{min-height:44px;padding:10px 14px;margin:6px;border-radius:7px;border:1px solid #31464d;background:#263b42;color:#fff}

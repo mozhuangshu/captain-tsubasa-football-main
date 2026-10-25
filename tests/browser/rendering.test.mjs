@@ -1,0 +1,5 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {chromium} from 'playwright';
+const base=process.env.BASE_URL||'http://127.0.0.1:4180/dist/';
+test('failed background head worker leaves main-thread controls and game functional',async()=>{
+ const b=await chromium.launch();try{const p=await b.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));await p.route(/head-warm-worker-[^/]*\.js/,r=>r.abort());await p.goto(base+'?debug');await p.waitForFunction(()=>window.webGame,{timeout:60000});await p.locator('[data-mode="versus"]').click();await p.waitForFunction(()=>webGame.app.r[0x5c9]===1&&(webGame.app.r[0x59]&127)===1);await p.keyboard.down('Enter');await p.waitForTimeout(100);await p.keyboard.up('Enter');await p.waitForFunction(()=>webGame.app.r[0x5c9]===1&&(webGame.app.r[0x59]&127)===5);await p.keyboard.press('ArrowDown');await p.waitForTimeout(150);assert.equal(await p.evaluate(()=>webGame.app.blocked),false);assert.deepEqual(errors,[]);}finally{await b.close();}
+});

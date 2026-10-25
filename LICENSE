@@ -1,0 +1,10 @@
+This repository contains components with different licensing terms.
+
+Original Web application code, build/test tools, and documentation are
+MIT-licensed to the extent the project contributors hold the relevant rights.
+See licenses/MIT.txt and LICENSING.md for the precise scope.
+
+The engine, recovered game data, graphics, audio, character adaptations, and
+third-party trademarks are NOT covered by a blanket MIT grant.
+Fusion Pixel font materials retain their SIL OFL 1.1 license.
+See LICENSING.md and THIRD_PARTY_NOTICES.md before redistribution.
