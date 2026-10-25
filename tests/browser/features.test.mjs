@@ -1,3 +1,4 @@
+import {resetMobileToPrimaryMenu} from './helpers.mjs';
 import {test} from 'node:test';import assert from 'node:assert/strict';import {chromium,devices} from 'playwright';
 const base=process.env.BASE_URL||'http://127.0.0.1:4180/dist/';
 test('first click is acknowledged during asynchronous loading and automatically starts the chosen mode',async()=>{
@@ -12,7 +13,7 @@ test('phone independently taps both complete team lists, confirms, and reaches t
  const p=await b.newPage({...devices['iPhone 13']}),errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto(base);await p.waitForFunction(()=>window.recoveredApp?.running,{timeout:60000});
  const state=()=>p.evaluate(()=>{const r=recoveredApp.r;return {main:r[0x58],sub:r[0x59]&127,phase:r[0x5c9],mode:r[0x57]&240,blocked:recoveredApp.blocked};});
  const tap=async name=>{await p.locator(`[data-button="${name}"]`).tap();await p.waitForTimeout(400);};
- for(let i=0;i<25;i++){const s=await state();if(s.main===2&&s.sub===1&&s.phase===1)break;await tap('Start');}
+ await resetMobileToPrimaryMenu(p);
  assert.deepEqual(await state(),{main:2,sub:1,phase:1,mode:128,blocked:false});
  const stick=await p.locator('[data-dpad]').boundingBox();await p.touchscreen.tap(stick.x+stick.width/2,stick.y+stick.height-6);await p.waitForTimeout(300);assert.equal((await state()).mode,64);
  if(process.env.BROWSER_EVIDENCE_DIR)await p.screenshot({path:process.env.BROWSER_EVIDENCE_DIR+'/mobile-primary.png'});
