@@ -75,12 +75,22 @@ test('phone virtual START and A reach a league match; joystick moves the player'
  for(let i=0;i<100;i++){
   const s=await p.evaluate(()=>{const a=recoveredApp,r=a.r;return {family:r[0x58],step:r[0x59]&127,phase:r[0x5c9],blocked:a.blocked,error:a.lastError?.message};});route.push(s);assert.equal(s.blocked,false,s.error);
   if(s.family===0&&s.step===2)break;
+  if(s.family===0){await touch('A');continue;}
   await touch(s.family===1||s.step===0||i%3===0?'Start':'A');
  }
- const active=await p.evaluate(()=>{const r=recoveredApp.r;return [r[0x58],r[0x59]&127];});assert.deepEqual(active,[0,2],JSON.stringify(route));await wait(1200);
+ const active=await p.evaluate(()=>{const r=recoveredApp.r;return [r[0x58],r[0x59]&127];});assert.deepEqual(active,[0,2],JSON.stringify(route));
+ // A menu START can overlap kickoff; resume through the real button if it paused play.
+ if(await p.evaluate(()=>!!(recoveredApp.r[0x5c]&128)))await touch('Start');
+ await p.waitForFunction(()=>{const a=recoveredApp,r=a.r;return a.running&&!a.blocked&&r[0x58]===0&&(r[0x59]&127)===2&&!(r[0x5c]&128);});
  const position=()=>p.evaluate(()=>{const r=recoveredApp.r,i=r[0x568];return [r[0x314+i]|r[0x327+i]<<8,r[0x34d+i]|r[0x360+i]<<8];});const before=await position();
  const stick=p.locator('[data-dpad]'),box=await stick.boundingBox();const client=await p.context().newCDPSession(p);
- await client.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width-8,y:box.y+box.height/2,id:1}]});await wait(650);const after=await position();await client.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});assert.notDeepEqual(after,before,'virtual joystick moves controlled player in a real match');await screenshot(p,'mobile-match');
+ await client.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width-8,y:box.y+box.height/2,id:1}]});
+ try{
+  await p.waitForFunction(()=>!!(recoveredApp.controllers[0]&1),null,{timeout:2000});
+  await p.waitForFunction(([x,y])=>{const r=recoveredApp.r,i=r[0x568];return (r[0x314+i]|r[0x327+i]<<8)!==x||(r[0x34d+i]|r[0x360+i]<<8)!==y;},before,{timeout:5000});
+  assert.notDeepEqual(await position(),before,'virtual joystick moves controlled player in a real match');
+ }finally{await client.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
+ await screenshot(p,'mobile-match');
  assert.equal(await p.evaluate(()=>recoveredApp.blocked),false);
  }finally{await b.close();}
 });
