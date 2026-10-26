@@ -48,6 +48,8 @@ export function evaluateTsubasaMorisakiSaveIshizaki(r,keeper){
  return {slot:null,distance:null,blocks:false};}
 export function getTsubasaMorisakiSaveState(r){return states.get(r)??null;}
 export function resetTsubasaMorisakiSave(r){states.delete(r);}
+// A save belongs to this keeper in this live match, never to a reused roster slot.
+export function syncTsubasaMorisakiSave(r){const s=states.get(r);if(s&&(!isTsubasaSpecialMovesEnabled(r)||r[0x58]!==0||(r[0x59]&127)!==2||(r[0x5c]&0x4e)||r[0x52c+(s.keeper&1)]!==s.team||r[0x532+s.keeper]!==s.playerNumber)){states.delete(r);return null;}return s;}
 function loose(r){r[0x4f0]=r[0x4c9]=r[0x510]=0;r[0x50f]=128;r[0x465]=6|128;r[0x492]=0;}
 function ballVel(r,vx,vy,vz,g){put(r,0x3e8+12,0x3f6+12,vx*256);put(r,0x404+12,0x412+12,vy*256);put(r,0x420+12,0x42e+12,vz*256);put(r,0x43c+12,0x44a+12,g);r[0x4bd+12]=0;}
 /** Native 0x59 init (player-actions $A0xx) keeps bits 6..5 of $496 and sets bit7 = 1 ^ facing bit ($4A3): direction index
@@ -60,14 +62,16 @@ function hold(r){for(const a of [0x3e8,0x3f6,0x404,0x412,0x420,0x42e,0x43c,0x44a
 /** Per frame, before player/ball updates (match-actors). Arms on the trigger (s1), then runs the block sequence. While armed the
  * special shot keeps flying on its own path and art (M-12); only when it actually reaches 森崎's body does M-9 take the ball. */
 export function stepTsubasaMorisakiSave(r){
- if(!isTsubasaSpecialMovesEnabled(r))return;let s=states.get(r);
+ let s=syncTsubasaMorisakiSave(r);if(!isTsubasaSpecialMovesEnabled(r))return;
+ // Rebound contact immunity must expire even after the scripted save is done.
+ if(s)s.t++;
  if(!s||s.done&&s.phase!=='s1'&&s.shotId!==getTsubasaSpecialState(r)?.id){const sp=getTsubasaSpecialState(r);if(!sp||s?.shotId===sp.id)return;
   const g=evaluateTsubasaMorisakiSaveTrigger(r,sp.owner,sp.moveId);if(!g.ok)return;
   const b=pos(r,12),k=pos(r,g.keeper);
   s={done:false,phase:'s1',t:0,shotId:sp.id,moveId:sp.moveId,shooter:sp.owner,keeper:g.keeper,left:g.left,dir:g.left?-1:1,hold:{x:k.x,y:k.y},
-   startFrame:r[0x300],ishizaki:null,result:null,log:[{t:0,frame:r[0x300],event:'trigger',moveId:sp.moveId,shooter:sp.owner,keeper:g.keeper,left:g.left,orientedX:g.orientedX,ball:b,keeperPos:k,ballSpeed:speed(r)}]};
+   team:r[0x52c+(g.keeper&1)],playerNumber:r[0x532+g.keeper],startFrame:r[0x300],ishizaki:null,result:null,log:[{t:0,frame:r[0x300],event:'trigger',moveId:sp.moveId,shooter:sp.owner,keeper:g.keeper,left:g.left,orientedX:g.orientedX,ball:b,keeperPos:k,ballSpeed:speed(r)}]};
   states.set(r,s);return;}
- if(s.done)return;s.t++;const t=s.t,b=pos(r,12);
+ if(s.done)return;const t=s.t,b=pos(r,12);
  if(s.phase==='s2'){r[0x465]=6|128;hold(r);
   if(t-s.contactT>=M.blockFrames){s.phase='s3';s.reboundT=t;
    r[0x4d6]=s.keeper;/* he touched it last */knockDirection(r,s);r[0x459+s.keeper]=0x59;r[0x87+s.keeper]=r[0x94+s.keeper]=r[0x46c+s.keeper]=0;/* native knock-back action, set fresh */
@@ -94,7 +98,7 @@ export function clampTsubasaMorisakiSaveApproach(r,x=12){const s=states.get(r);i
 function bodyContact(r,s){const b=pos(r,12),k=s.hold,ob=s.left?1023-b.x:b.x,ok=(s.left?1023-k.x:k.x)-M.chestDX;
  if(ob<ok)return null;if(Math.abs(b.y-k.y)<=M.bodyReach.y&&b.z<=M.bodyReach.z)return {ball:b,x:k.x-s.dir*M.chestDX};return {passed:true,ball:b};}
 /** Frame tail (after all updates, before OAM assembly): hold the keeper, 石崎's contact at his frame 13, poses. */
-export function applyTsubasaMorisakiSaveFrame(r){const s=states.get(r);if(!s)return false;s.pose=null;
+export function applyTsubasaMorisakiSaveFrame(r){const s=syncTsubasaMorisakiSave(r);if(!s)return false;s.pose=null;
  if(s.phase==='s1'&&!s.done){const sp=getTsubasaSpecialState(r),c=bodyContact(r,s);
   if(c?.passed||!c&&(!sp||sp.id!==s.shotId)){s.phase='released';s.done=true;s.result=c?.passed?'ball-passed-keeper':'special-ended-before-contact';s.log.push({t:s.t,frame:r[0x300],event:s.result,ball:pos(r,12)});return true;}
   if(c){endTsubasaSpecialShot(r,'morisaki-save');loose(r);put(r,0x314+12,0x327+12,c.x);r[0x301+12]=0;hold(r);s.phase='s2';s.contactT=s.t;r[0x74+12]=0;/* native ball frame F00 (the special art ends at the block) */s.contactShift=Math.abs(c.x-c.ball.x);
@@ -110,8 +114,8 @@ export function applyTsubasaMorisakiSaveFrame(r){const s=states.get(r);if(!s)ret
 /** Ball contact filter (ball-collision scanBallPlayerContacts): the blocking keeper never catches the ball during s1/s2 nor on
  * the first M.reboundIgnoreFrames frames of the rebound (the block IS his contact; D-40: no catch, no forced save). 石崎 only
  * touches the ball on his header frame 13. */
-export function tsubasaMorisakiSaveIgnores(r,slot){const s=states.get(r);if(!s)return false;if(s.ishizaki!=null&&slot===s.ishizaki)return s.headed?s.t-s.headT<M.reboundIgnoreFrames:(r[0x74+slot]&127)!==13;/* 石崎 meets the ball on 0x34's frame 13 (f2->f3->f13) */if(slot!==s.keeper)return false;return s.phase==='s1'||s.phase==='s2'||s.phase==='s3'&&s.t-s.reboundT<M.reboundIgnoreFrames;}
+export function tsubasaMorisakiSaveIgnores(r,slot){const s=syncTsubasaMorisakiSave(r);if(!s)return false;if(s.ishizaki!=null&&slot===s.ishizaki)return s.headed?s.t-s.headT<M.reboundIgnoreFrames:!s.done&&(r[0x74+slot]&127)!==13;/* 石崎 meets the ball on 0x34's frame 13 (f2->f3->f13) */if(slot!==s.keeper)return false;return s.phase==='s1'||s.phase==='s2'||s.phase==='s3'&&s.t-s.reboundT<M.reboundIgnoreFrames;}
 /** Pose for the renderer this frame: {slot,key:'s1'|'s2'|'s3',mirrored} or null. Right goal = mirrored (project's flip rule). */
-export function getTsubasaMorisakiSavePose(r){return states.get(r)?.pose??null;}
+export function getTsubasaMorisakiSavePose(r){return syncTsubasaMorisakiSave(r)?.pose??null;}
 /** True while the move (including the s3 knock-back display) still runs; review fixtures keep stepping meanwhile. */
-export function isTsubasaMorisakiSaveRunning(r){const s=states.get(r);return !!s&&(!s.done||!!s.pose);}
+export function isTsubasaMorisakiSaveRunning(r){const s=syncTsubasaMorisakiSave(r);return !!s&&(!s.done||!!s.pose);}
